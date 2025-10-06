@@ -1,13 +1,9 @@
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, SystemMessage
-import getpass
 import os
 
 load_dotenv()
-
-if not os.environ.get("OPENAI_API_KEY"):
-    open_api_key = os.getenv("OPENAI_API_KEY")
 
 model = init_chat_model("gpt-4o-mini",model_provider="openai")
 messages = [
