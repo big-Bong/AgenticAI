@@ -13,7 +13,7 @@ import bs4
 
 load_dotenv()
 
-model = init_chat_model(model="gemini-2.5-flash",model_provider="google_genai")
+llm = init_chat_model(model="gemini-2.5-flash",model_provider="google_genai")
 embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 vector_store = InMemoryVectorStore(embedding=embeddings)
 
@@ -41,3 +41,22 @@ class State(TypedDict):
     question: str
     context: List[Document]
     answer: str
+
+def retrieve(state: State):
+    retrieved_docs = vector_store.similarity_search(state["question"])
+    return {"context": retrieved_docs}
+
+def generate(state: State):
+    docs_content = "\n\n".join(doc.page_content for doc in state["context"])
+    messages = prompt.invoke({"question": state["question"], "context": docs_content})
+    response = llm.invoke(messages)
+    return {"answer": response.content}
+
+
+# Compile application and test
+graph_builder = StateGraph(State).add_sequence([retrieve, generate])
+graph_builder.add_edge(START, "retrieve")
+graph = graph_builder.compile()
+
+response = graph.invoke({"question": "What is Task Decomposition?"})
+print(response["answer"])
